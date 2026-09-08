@@ -22,114 +22,115 @@
                         serif: ['"Noto Serif TC"', 'serif'],
                     },
                     colors: {
-                        slate: {
-                            750: '#2d3748', // Custom darker slate
-                        }
+                        slate: { 750: '#2d3748' }
                     }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #f8fafc; /* Slate-50 equivalent */
-        }
+        body { background-color: #f8fafc; }
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #334155; /* Slate-700 */
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6;
+            border-radius: 50%; width: 48px; height: 48px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Custom scrollbar for better vibe */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
-        /* Chat Bubble Animations */
-        .chat-fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Audio Player Styling */
-        audio::-webkit-media-controls-panel {
-            background-color: #f1f5f9;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .chat-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        audio::-webkit-media-controls-panel { background-color: #f8fafc; }
+        
+        /* Modal Transitions */
+        .modal-enter { opacity: 1 !important; }
+        .modal-enter-content { transform: scale(1) translateY(0) !important; }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col relative selection:bg-blue-200 selection:text-blue-900">
 
-    <!-- F-M1: API Key & Header Area -->
-    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <img src="https://i.postimg.cc/fT2sQW09/1.png" alt="Logo" class="h-10 w-auto"> <!-- F-M6: Brand Logo -->
-                <h1 class="text-xl font-serif font-bold tracking-wide">AI解籤 <span class="text-xs font-sans font-normal opacity-70 ml-2">v1.3 Voice Fix</span></h1>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-xl sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 flex-shrink-0">
+                <img src="https://i.postimg.cc/fT2sQW09/1.png" alt="Logo" class="h-10 w-auto" onerror="this.src='https://placehold.co/40x40/1e293b/ffffff?text=AI'">
+                <h1 class="text-xl font-serif font-bold tracking-wide flex items-baseline">
+                    AI解籤 <span class="text-[10px] font-sans font-medium bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full ml-3 border border-blue-500/30 hidden sm:inline-block">v2.0 Cloud</span>
+                </h1>
             </div>
             
-            <div class="flex items-center space-x-2 mt-2 sm:mt-0 w-full sm:w-auto bg-slate-800 p-1 rounded-lg border border-slate-700 transition-colors duration-300" id="apiKeyContainer">
-                <i class="fa-solid fa-key text-slate-400 pl-2"></i>
-                <input type="password" id="apiKeyInput" placeholder="輸入 Google Gemini API Key" 
-                    class="bg-transparent border-none focus:ring-0 text-sm text-white w-full sm:w-64 placeholder-slate-500"
-                    oninput="checkApiKey()">
-                <!-- Status Indicator -->
-                <div id="apiKeyStatus" class="px-2 text-slate-500 transition-colors duration-300">
-                    <i class="fa-solid fa-circle-xmark" title="尚未輸入完整 Key"></i>
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end flex-grow sm:flex-grow-0">
+                <!-- API Key Input -->
+                <div class="flex items-center space-x-2 bg-slate-800/80 p-1.5 rounded-lg border border-slate-700 transition-all duration-300 flex-grow sm:flex-grow-0 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500" id="apiKeyContainer">
+                    <i class="fa-solid fa-key text-slate-400 pl-2 text-sm"></i>
+                    <input type="password" id="apiKeyInput" placeholder="輸入 Gemini API Key" 
+                        class="bg-transparent border-none focus:ring-0 text-sm text-white w-full sm:w-48 placeholder-slate-500 outline-none"
+                        oninput="checkApiKey()">
+                    <div id="apiKeyStatus" class="px-1 text-slate-500"><i class="fa-solid fa-circle-xmark text-sm"></i></div>
                 </div>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-slate-400 hover:text-white px-2 whitespace-nowrap border-l border-slate-600">
-                    取得 Key <i class="fa-solid fa-external-link-alt ml-1"></i>
-                </a>
+
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- History Button -->
+                    <button id="historyBtn" onclick="openHistory()" class="hidden text-slate-300 hover:text-white transition-colors flex items-center bg-slate-800/80 px-3 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-700 hover:border-slate-500 font-medium text-sm" title="我的歷史紀錄">
+                        <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i> 雲端紀錄
+                    </button>
+
+                    <!-- Auth Button -->
+                    <button id="loginBtn" onclick="handleAuth()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2.5 rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center whitespace-nowrap border border-transparent font-medium">
+                        <i class="fa-brands fa-google mr-2"></i> <span id="loginBtnText">登入</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Grid -->
-    <main class="flex-grow container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden flex justify-center items-center opacity-0 transition-opacity duration-300">
+        <div id="historyModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col transform scale-95 translate-y-4 transition-all duration-300 m-4 overflow-hidden border border-slate-200">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h2 class="text-xl font-bold text-slate-800 font-serif"><i class="fa-solid fa-cloud-arrow-down text-blue-500 mr-2"></i>我的歷史紀錄</h2>
+                <button onclick="closeHistory()" class="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto flex-grow bg-slate-50/50 space-y-4" id="historyList">
+                <!-- Records injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
         
-        <!-- Left Panel: Inputs (F-M2, F-M3) -->
+        <!-- Left Panel: Inputs -->
         <div class="lg:col-span-4 space-y-6">
-            
-            <!-- Branding / Consultant Profile (F-M6) -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-100 p-4 flex items-center space-x-4 border-b border-slate-200">
-                    <img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" alt="TONY老師" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm">
+            <!-- Consultant Profile -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-md transition-shadow">
+                <div class="bg-gradient-to-r from-slate-50 to-white p-5 flex items-center space-x-4 border-b border-slate-100">
+                    <div class="relative">
+                        <img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" alt="TONY老師" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                        <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                    </div>
                     <div>
-                        <h2 class="font-bold text-slate-800">TONY 楊文澤</h2>
-                        <p class="text-xs text-slate-500 font-medium">AI 導師 | 數位行銷科技顧問</p>
+                        <h2 class="font-bold text-slate-800 text-lg">TONY 楊文澤</h2>
+                        <p class="text-xs text-blue-600 font-medium bg-blue-50 inline-block px-2 py-0.5 rounded-full mt-1 border border-blue-100">AI 導師 | 數位行銷科技顧問</p>
                     </div>
                 </div>
-                <div class="p-4">
-                    <p class="text-sm text-slate-600 leading-relaxed">
-                        擁有豐富的品牌行銷與生成式 AI 實戰經驗。在此為您提供結合傳統智慧與現代視角的籤詩深度解析。
-                    </p>
+                <div class="p-5">
+                    <p class="text-sm text-slate-600 leading-relaxed">提供結合傳統智慧與現代視角的籤詩深度解析，並透過 Google 雲端安全珍藏您的每一次靈感。</p>
                 </div>
             </div>
 
             <!-- Input Form -->
-            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-6">
-                
-                <!-- F-M3: Domain Selection -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 space-y-6">
+                <!-- Domain Selection -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">1. 請問您想詢問的主題？</label>
-                    <div class="relative">
-                        <select id="queryArea" class="w-full bg-slate-50 border border-slate-300 text-slate-700 py-3 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent appearance-none">
+                    <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center"><span class="bg-slate-100 text-slate-500 w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-xs">1</span> 請問您想詢問的主題？</label>
+                    <div class="relative group">
+                        <select id="queryArea" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3.5 px-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 appearance-none cursor-pointer transition-all hover:bg-slate-100">
                             <option value="" disabled selected>請選擇領域...</option>
                             <option value="官司訴訟">⚖️ 官司 (Lawsuit)</option>
                             <option value="事業運勢">🏢 事業 (Career)</option>
@@ -139,805 +140,778 @@
                             <option value="財運投資">💰 財運 (Wealth)</option>
                             <option value="綜合運勢">🔮 綜合 (General)</option>
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
-                            <i class="fa-solid fa-chevron-down text-xs"></i>
-                        </div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 group-hover:text-blue-500 transition-colors"><i class="fa-solid fa-chevron-down text-sm"></i></div>
                     </div>
                 </div>
 
-                <!-- F-M2: Input Tabs -->
+                <!-- Input Tabs -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">2. 請提供您的籤詩內容</label>
+                    <label class="block text-sm font-bold text-slate-700 mb-3 flex items-center"><span class="bg-slate-100 text-slate-500 w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-xs">2</span> 請提供您的籤詩內容</label>
                     
-                    <!-- Tabs Header -->
-                    <div class="flex border-b border-slate-200 mb-4">
-                        <button onclick="switchTab('text')" id="tab-text" class="flex-1 py-2 text-sm font-medium text-slate-700 border-b-2 border-slate-700 hover:text-slate-900 focus:outline-none">
-                            <i class="fa-solid fa-font mr-1"></i> 文字
-                        </button>
-                        <button onclick="switchTab('image')" id="tab-image" class="flex-1 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-700 focus:outline-none">
-                            <i class="fa-solid fa-image mr-1"></i> 圖片
-                        </button>
-                        <button onclick="switchTab('pdf')" id="tab-pdf" class="flex-1 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-700 focus:outline-none">
-                            <i class="fa-solid fa-file-pdf mr-1"></i> PDF
-                        </button>
+                    <div class="flex p-1 bg-slate-100 rounded-lg mb-4">
+                        <button onclick="switchTab('text')" id="tab-text" class="flex-1 py-2 text-sm font-bold bg-white text-slate-800 shadow-sm rounded-md transition-all"><i class="fa-solid fa-font mr-1.5 text-blue-500"></i>文字</button>
+                        <button onclick="switchTab('image')" id="tab-image" class="flex-1 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-all rounded-md"><i class="fa-solid fa-image mr-1.5"></i>圖片</button>
+                        <button onclick="switchTab('pdf')" id="tab-pdf" class="flex-1 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-all rounded-md"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button>
                     </div>
 
-                    <!-- Tab Content: Text -->
-                    <div id="content-text" class="block">
-                        <textarea id="lotText" rows="6" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent" placeholder="請在此輸入籤詩內容，例如：「第一籤 甲甲 大吉 巍巍獨步向雲間...」"></textarea>
+                    <!-- Texts Content -->
+                    <div id="content-text" class="block animate-[fadeIn_0.2s_ease-out]">
+                        <textarea id="lotText" rows="5" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none resize-y transition-all hover:bg-slate-100 placeholder-slate-400" placeholder="例如：「第一籤 甲甲 大吉 巍巍獨步向雲間...」"></textarea>
                     </div>
-
-                    <!-- Tab Content: Image -->
-                    <div id="content-image" class="hidden">
-                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors relative">
-                            <input type="file" id="lotImage" accept="image/png, image/jpeg, image/jpg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewFile('image')">
-                            <div id="imagePreviewBox">
-                                <i class="fa-solid fa-cloud-upload-alt text-3xl text-slate-400 mb-2"></i>
-                                <p class="text-sm text-slate-500">點擊或拖曳上傳 JPG/PNG</p>
+                    <!-- Image Content -->
+                    <div id="content-image" class="hidden animate-[fadeIn_0.2s_ease-out]">
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-blue-50 hover:border-blue-300 transition-all relative cursor-pointer group bg-slate-50/50">
+                            <input type="file" id="lotImage" accept="image/png, image/jpeg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewFile('image')">
+                            <div id="imagePreviewBox" class="transform group-hover:scale-105 transition-transform">
+                                <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-blue-500"><i class="fa-solid fa-image text-xl"></i></div>
+                                <p class="text-sm font-medium text-slate-700">點擊或拖曳上傳圖片</p>
+                                <p class="text-xs text-slate-400 mt-1">支援 PNG, JPG (上限 5MB)</p>
                             </div>
-                            <img id="imagePreview" class="hidden max-h-48 mx-auto rounded shadow-sm mt-2">
+                            <img id="imagePreview" class="hidden max-h-48 mx-auto rounded-lg shadow-md mt-2 object-contain relative z-20 pointer-events-none" alt="Preview">
                         </div>
                     </div>
-
-                    <!-- Tab Content: PDF -->
-                    <div id="content-pdf" class="hidden">
-                         <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors relative">
-                            <input type="file" id="lotPdf" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewFile('pdf')">
-                            <div id="pdfPreviewBox">
-                                <i class="fa-solid fa-file-pdf text-3xl text-slate-400 mb-2"></i>
-                                <p class="text-sm text-slate-500">點擊上傳 PDF 文件</p>
+                    <!-- PDF Content -->
+                    <div id="content-pdf" class="hidden animate-[fadeIn_0.2s_ease-out]">
+                         <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-red-50 hover:border-red-300 transition-all relative cursor-pointer group bg-slate-50/50">
+                            <input type="file" id="lotPdf" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewFile('pdf')">
+                            <div id="pdfPreviewBox" class="transform group-hover:scale-105 transition-transform">
+                                <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-red-500"><i class="fa-solid fa-file-pdf text-xl"></i></div>
+                                <p class="text-sm font-medium text-slate-700">點擊上傳 PDF 文件</p>
+                                <p class="text-xs text-slate-400 mt-1">上限 5MB</p>
                             </div>
-                            <div id="pdfName" class="hidden mt-2 text-sm font-medium text-slate-700 bg-slate-100 py-1 px-3 rounded inline-block"></div>
+                            <div id="pdfName" class="hidden mt-4 text-sm font-medium text-red-700 bg-red-100/50 py-2 px-4 rounded-lg truncate border border-red-200"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button onclick="submitConsultation()" id="submitBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 開始 AI 解籤
+                <button onclick="submitConsultation()" id="submitBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-slate-900/20 transition-all flex justify-center items-center group relative overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span class="absolute inset-0 w-full h-full bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-500 ease-out"></span>
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2 group-hover:rotate-12 transition-transform"></i> <span class="relative z-10">開始 AI 深度解籤</span>
                 </button>
-                <p class="text-xs text-center text-slate-400 mt-2">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> API Key 僅於瀏覽器端處理，不會儲存於伺服器。
-                </p>
-
             </div>
         </div>
 
-        <!-- Right Panel: Output (F-M4, F-M5, F-S1, F-S2) -->
+        <!-- Right Panel: Results & Chat -->
         <div class="lg:col-span-8 space-y-6">
             
             <!-- Welcome State -->
-            <div id="welcomeState" class="flex flex-col items-center justify-center h-full text-slate-400 py-12 border-2 border-dashed border-slate-200 rounded-xl">
-                <i class="fa-solid fa-scroll text-6xl mb-4 text-slate-200"></i>
-                <h3 class="text-lg font-medium">準備解讀您的籤詩</h3>
-                <p class="text-sm mt-2">請在左側輸入資料並點擊開始</p>
+            <div id="welcomeState" class="flex flex-col items-center justify-center h-full min-h-[500px] text-slate-400 py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-white/50 backdrop-blur-sm transition-all">
+                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner"><i class="fa-solid fa-scroll text-5xl text-slate-300"></i></div>
+                <h3 class="text-xl font-serif font-bold text-slate-600 mb-2">準備解讀您的籤詩</h3>
+                <p class="text-sm text-slate-500">請在左側輸入資料並點擊開始</p>
             </div>
 
-            <!-- Loading State (N-P2) -->
-            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
-                <div class="loading-spinner mb-4"></div>
-                <h3 class="text-lg font-medium text-slate-700">TONY 老師正在為您分析籤意...</h3>
-                <p class="text-sm text-slate-500 mt-2 animate-pulse">正在連結傳統智慧與現代數據</p>
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-24 bg-white rounded-2xl shadow-sm border border-slate-100 min-h-[500px]">
+                <div class="loading-spinner mb-8"></div>
+                <h3 class="text-xl font-serif font-bold text-slate-700 mb-3">TONY 老師正在為您深思...</h3>
+                <p class="text-sm text-slate-500 animate-pulse bg-slate-50 px-4 py-2 rounded-full border border-slate-100">正在連結傳統智慧與現代數據</p>
             </div>
 
-            <!-- Result Display -->
-            <div id="resultContainer" class="hidden space-y-6">
+            <!-- Result Display Container -->
+            <div id="resultContainer" class="hidden space-y-6 animate-[fadeIn_0.5s_ease-out]">
                 
                 <!-- Action Bar -->
-                <div class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-                    <h3 class="font-serif font-bold text-xl text-slate-800"><i class="fa-solid fa-star text-yellow-500 mr-2"></i>解籤報告</h3>
-                    <div class="flex space-x-2">
-                        <!-- ✨ New Feature: Ritual Button -->
-                        <button onclick="generateRitual()" id="ritualBtn" class="bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 px-3 rounded shadow transition flex items-center">
-                            <i class="fa-solid fa-hand-sparkles mr-1"></i> 求幸運儀式
-                        </button>
-                        <button onclick="downloadDoc()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded shadow transition flex items-center">
-                            <i class="fa-solid fa-file-word mr-1"></i> 下載報告
-                        </button>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 gap-4">
+                    <h3 class="font-serif font-bold text-xl text-slate-800 flex items-center"><span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center mr-3"><i class="fa-solid fa-star text-sm"></i></span> 解籤分析報告</h3>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="generateRitual()" id="ritualBtn" class="flex-1 sm:flex-none bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors flex justify-center items-center"><i class="fa-solid fa-hand-sparkles mr-2 text-purple-500"></i>求幸運儀式</button>
+                        <button onclick="downloadDoc()" class="flex-1 sm:flex-none bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors flex justify-center items-center"><i class="fa-solid fa-file-word mr-2 text-blue-500"></i>下載檔案</button>
                     </div>
                 </div>
 
-                <!-- Ritual Display (Initially Hidden) -->
-                <div id="ritualContainer" class="hidden bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5 relative overflow-hidden transition-all duration-500">
-                    <div class="absolute top-0 right-0 p-2 opacity-10">
-                        <i class="fa-solid fa-yin-yang text-6xl text-purple-800"></i>
+                <!-- Ritual Display -->
+                <div id="ritualContainer" class="hidden bg-gradient-to-br from-purple-900 to-indigo-900 text-white rounded-2xl p-8 relative shadow-lg overflow-hidden animate-[fadeIn_0.4s_ease-out]">
+                    <div class="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 opacity-10 pointer-events-none"><i class="fa-solid fa-yin-yang text-[12rem]"></i></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center mb-4">
+                            <span class="bg-white/20 backdrop-blur-sm text-purple-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10"><i class="fa-solid fa-sparkles mr-1.5"></i> Daily Lucky Ritual</span>
+                        </div>
+                        <h3 class="font-serif font-bold text-2xl mb-4 text-purple-50">TONY 老師專屬轉運建議</h3>
+                        <div id="ritualContent" class="text-purple-100 text-sm md:text-base leading-relaxed prose prose-invert prose-purple max-w-none font-medium"></div>
                     </div>
-                    <h4 class="text-purple-700 font-bold text-sm uppercase tracking-wider mb-2">✨ Daily Lucky Ritual</h4>
-                    <h3 class="font-serif font-bold text-lg text-slate-800 mb-3">TONY 老師專屬轉運建議</h3>
-                    <div id="ritualContent" class="text-slate-700 text-sm leading-relaxed whitespace-pre-line"></div>
                 </div>
 
-                <!-- General & Focused Interpretation -->
+                <!-- Interpretation Cards -->
                 <div class="grid md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h4 class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">General Interpretation</h4>
-                        <h3 class="text-lg font-serif font-bold text-slate-800 mb-3 border-b pb-2">綜合運勢解析</h3>
-                        <p id="resGeneral" class="text-slate-600 leading-relaxed text-sm text-justify"></p>
+                    <div class="bg-white p-7 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+                        <div class="flex items-center mb-4"><span class="w-8 h-8 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center mr-3"><i class="fa-solid fa-book-open"></i></span><h4 class="text-slate-500 text-xs font-bold uppercase tracking-widest">General Interpretation</h4></div>
+                        <h3 class="text-xl font-serif font-bold text-slate-800 mb-4 pb-4 border-b border-slate-100">綜合運勢解析</h3>
+                        <p id="resGeneral" class="text-slate-600 leading-relaxed text-sm md:text-base text-justify whitespace-pre-wrap"></p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 ring-1 ring-slate-900/5">
-                        <h4 class="text-blue-600 text-xs font-bold uppercase tracking-wider mb-2">Focused Interpretation</h4>
-                        <h3 id="resFocusTitle" class="text-lg font-serif font-bold text-slate-800 mb-3 border-b pb-2">針對領域詳解</h3>
-                        <p id="resFocused" class="text-slate-700 font-medium leading-relaxed text-sm text-justify"></p>
+                    <div class="bg-white p-7 rounded-2xl shadow-md border border-blue-100 relative overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-bl-full z-0"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center mb-4"><span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3"><i class="fa-solid fa-bullseye"></i></span><h4 class="text-blue-600 text-xs font-bold uppercase tracking-widest">Focused Interpretation</h4></div>
+                            <h3 id="resFocusTitle" class="text-xl font-serif font-bold text-slate-800 mb-4 pb-4 border-b border-blue-50">針對領域詳解</h3>
+                            <p id="resFocused" class="text-slate-700 font-medium leading-relaxed text-sm md:text-base text-justify whitespace-pre-wrap"></p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Actionable Advice (F-M5) + ✨ New Feature: Audio Player -->
-                <div class="bg-slate-800 text-white p-6 rounded-xl shadow-md relative overflow-hidden">
-                    <div class="absolute top-0 right-0 -mt-4 -mr-4 text-slate-700 opacity-20">
-                        <i class="fa-solid fa-compass text-9xl"></i>
+                <!-- Actionable Advice + Audio -->
+                <div class="bg-slate-800 text-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 text-slate-700 opacity-30 pointer-events-none"><i class="fa-solid fa-compass text-9xl"></i></div>
+                    
+                    <div class="flex flex-col sm:flex-row justify-between items-start mb-6 relative z-10 gap-4">
+                        <div>
+                            <span class="bg-slate-700 text-slate-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block border border-slate-600">Actionable Advice</span>
+                            <h3 class="text-3xl font-serif font-bold text-slate-50 flex items-center"><i class="fa-solid fa-lightbulb text-yellow-400 mr-3 text-2xl"></i>行動建議</h3>
+                        </div>
+                        <button onclick="generateSpeech()" id="ttsBtn" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white text-sm font-bold py-2.5 px-5 rounded-xl border border-white/20 transition-all flex items-center justify-center backdrop-blur-sm"><i class="fa-solid fa-volume-high mr-2"></i> 聽老師開示</button>
                     </div>
                     
-                    <div class="flex justify-between items-start mb-4 relative z-10">
-                        <div>
-                            <h4 class="text-slate-300 text-xs font-bold uppercase tracking-wider mb-1">Actionable Advice</h4>
-                            <h3 class="text-xl font-serif font-bold">TONY 老師的行動建議</h3>
-                        </div>
-                        <!-- TTS Button -->
-                        <button onclick="generateSpeech()" id="ttsBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs py-1.5 px-3 rounded-full border border-slate-600 transition flex items-center">
-                            <i class="fa-solid fa-volume-high mr-2"></i> 聽老師開示
-                        </button>
-                    </div>
-
-                    <!-- Audio Player (Hidden until generated) -->
-                    <div id="audioContainer" class="hidden mb-4 relative z-10">
-                        <audio id="audioPlayer" controls class="w-full h-8 rounded-full opacity-90"></audio>
-                    </div>
-
-                    <div class="flex items-start relative z-10">
-                        <i class="fa-solid fa-quote-left text-slate-500 text-2xl mr-4 mt-1"></i>
-                        <p id="resAdvice" class="text-slate-200 leading-relaxed text-lg"></p>
+                    <div id="audioContainer" class="hidden mb-6 relative z-10 bg-black/30 p-4 rounded-xl border border-white/5"><audio id="audioPlayer" controls class="w-full h-10 outline-none rounded-lg"></audio></div>
+                    
+                    <div class="flex items-start relative z-10 bg-slate-900/60 p-6 rounded-xl border border-slate-700/50 shadow-inner">
+                        <i class="fa-solid fa-quote-left text-slate-500 text-3xl mr-4 opacity-50 mt-1"></i>
+                        <p id="resAdvice" class="text-slate-100 leading-relaxed text-lg whitespace-pre-wrap font-medium"></p>
                     </div>
                 </div>
 
-                <!-- Image Prompts (F-S1) -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h4 class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">AI Image Generation Prompts</h4>
-                    <div class="space-y-4">
-                        <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                            <span class="text-xs font-bold text-slate-400 block mb-1">Chinese Prompt</span>
-                            <p id="resPromptCN" class="text-sm text-slate-700 break-words font-mono"></p>
+                <!-- Prompts -->
+                <div class="bg-white p-7 rounded-2xl shadow-sm border border-slate-200/60">
+                    <div class="flex items-center mb-5"><span class="w-8 h-8 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center mr-3"><i class="fa-solid fa-palette"></i></span><h4 class="text-slate-600 text-sm font-bold uppercase tracking-wide">AI Image Generation Prompts</h4></div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 relative group hover:bg-white hover:shadow-md transition-all hover:border-blue-200">
+                            <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Chinese Prompt</span>
+                            <p id="resPromptCN" class="text-sm text-slate-700 font-mono leading-relaxed"></p>
+                            <button onclick="copyToClipboard('resPromptCN', this)" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white text-slate-400 rounded-lg shadow-sm border border-slate-200 hover:text-blue-600 hover:border-blue-300 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100" title="複製"><i class="fa-regular fa-copy"></i></button>
                         </div>
-                        <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                            <span class="text-xs font-bold text-slate-400 block mb-1">English Prompt (Midjourney/DALL-E)</span>
-                            <p id="resPromptEN" class="text-sm text-slate-700 break-words font-mono"></p>
-                            <button onclick="copyToClipboard('resPromptEN')" class="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium">
-                                <i class="fa-regular fa-copy"></i> Copy English Prompt
-                            </button>
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 relative group hover:bg-white hover:shadow-md transition-all hover:border-blue-200">
+                            <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">English Prompt</span>
+                            <p id="resPromptEN" class="text-sm text-slate-700 font-mono leading-relaxed"></p>
+                            <button onclick="copyToClipboard('resPromptEN', this)" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white text-slate-400 rounded-lg shadow-sm border border-slate-200 hover:text-blue-600 hover:border-blue-300 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100" title="複製"><i class="fa-regular fa-copy"></i></button>
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- Chat Feature: AI Fortune Assistant Bot -->
-            <div id="chatContainer" class="hidden bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden flex flex-col" style="height: 500px;">
-                <!-- Chat Header -->
-                <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+            <!-- Chatbot UI -->
+            <div id="chatContainer" class="hidden bg-white rounded-2xl shadow-xl border border-slate-200/60 flex flex-col h-[550px] overflow-hidden animate-[fadeIn_0.6s_ease-out]">
+                <div class="bg-gradient-to-r from-slate-50 to-white p-4 border-b border-slate-100 flex justify-between items-center z-10 shadow-sm relative">
                     <div class="flex items-center space-x-3">
-                        <div class="bg-slate-800 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center">
-                            <i class="fa-solid fa-robot"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-slate-800">AI 命理助手</h3>
-                            <p class="text-xs text-slate-500">針對本次籤詩結果，歡迎提問後續</p>
-                        </div>
+                        <div class="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-md shadow-blue-600/20"><i class="fa-solid fa-robot text-lg"></i></div>
+                        <div><h3 class="font-bold text-slate-800">AI 命理助手</h3><p class="text-[11px] text-slate-500 font-medium">基於 gemini-3.8-flash 核心</p></div>
                     </div>
-                    <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-600" title="清除對話">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
+                    <button onclick="clearChat()" class="text-slate-400 hover:text-red-500 hover:bg-red-50 w-9 h-9 rounded-lg flex items-center justify-center transition-colors" title="清除對話紀錄"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
-
-                <!-- Chat Messages Area -->
-                <div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-4 bg-slate-50/50">
-                    <!-- Default Welcome Message -->
+                <div id="chatMessages" class="flex-grow p-5 overflow-y-auto space-y-5 bg-slate-50/30 scroll-smooth">
                     <div class="flex items-start">
-                        <img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" class="w-8 h-8 rounded-full mr-3 mt-1 shadow-sm">
-                        <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[85%]">
-                            <p class="text-sm text-slate-700">您好，我是您的專屬 AI 助手。關於剛剛的解籤結果，如果您有關於「<span id="chatContextTopic" class="font-bold text-blue-600">--</span>」的延伸問題，歡迎隨時問我！</p>
+                        <img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" class="w-9 h-9 rounded-full mr-3 mt-1 shadow-sm object-cover border border-slate-200">
+                        <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%]">
+                            <p class="text-sm text-slate-700 leading-relaxed">您好，關於「<span id="chatContextTopic" class="font-bold text-blue-600 bg-blue-50 px-1 rounded"></span>」的解籤結果，如果您有任何延伸的疑惑，歡迎隨時問我！</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Chat Input Area -->
-                <div class="p-4 bg-white border-t border-slate-200">
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="chatInput" placeholder="例如：那我最近適合換工作嗎？" 
-                            class="flex-grow bg-slate-50 border border-slate-300 text-slate-700 rounded-full py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                            onkeypress="if(event.key === 'Enter') sendChatMessage()">
-                        <button onclick="sendChatMessage()" id="chatSendBtn" class="bg-slate-800 hover:bg-slate-700 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors disabled:opacity-50">
-                            <i class="fa-solid fa-paper-plane text-sm"></i>
-                        </button>
+                <div class="p-4 bg-white border-t border-slate-100 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+                    <div class="flex items-end space-x-3">
+                        <textarea id="chatInput" placeholder="輸入您的問題..." class="flex-grow bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white outline-none resize-none min-h-[48px] max-h-32 transition-colors" rows="1" onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }"></textarea>
+                        <button onclick="sendChatMessage()" id="chatSendBtn" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl w-12 h-12 flex justify-center items-center shadow-md shadow-blue-600/20 transition-transform active:scale-95 disabled:opacity-50"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
                 </div>
             </div>
-
         </div>
-
     </main>
 
-    <!-- Footer (F-M6) -->
-    <footer class="bg-white border-t border-slate-200 py-6 mt-8">
-        <div class="container mx-auto px-4 text-center">
-            <p class="text-sm text-slate-500">
-                © 2026 TONY STUDIO. 本教材由 TONY STUDIO 楊文澤顧問設計. All Rights Reserved.
-            </p>
-        </div>
-    </footer>
+    <!-- Firebase System Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    <!-- JavaScript Logic -->
-    <script>
-        // --- State Management ---
-        let currentTab = 'text';
-        let fileData = null; // { mimeType: string, data: base64 }
-        let currentResult = null; // To store JSON for export
-        let chatHistory = []; // Stores context for the chatbot
-        let contextSummary = ""; // Summarized context for the chat system prompt
-
-        // --- UI Handlers ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDMwtsuoNBtUhuEdrHVH-0tHggC69UwZiU",
+            authDomain: "d24-ai-powered-fortune-slip.firebaseapp.com",
+            projectId: "d24-ai-powered-fortune-slip",
+            storageBucket: "d24-ai-powered-fortune-slip.firebasestorage.app",
+            messagingSenderId: "853434528807",
+            appId: "1:853434528807:web:1c4664115607a1b7cc0a02",
+            measurementId: "G-8K6EPNFPQ8"
+        };
         
-        // ✨ NEW: Check API Key input for visual feedback
-        function checkApiKey() {
-            const input = document.getElementById('apiKeyInput');
-            const statusDiv = document.getElementById('apiKeyStatus');
-            const container = document.getElementById('apiKeyContainer');
-            
-            if (input.value.length > 35) { // Assuming Gemini keys are long
-                statusDiv.innerHTML = '<i class="fa-solid fa-circle-check text-green-500" title="Key 格式大致正確"></i>';
-                container.classList.remove('border-slate-700');
-                container.classList.add('border-green-600', 'ring-1', 'ring-green-600');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const provider = new GoogleAuthProvider();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        let currentUser = null;
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (tokenError) {
+                        console.warn("自訂 Token 不匹配 (環境隔離機制)，降級為匿名登入。");
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+            }
+        }
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const historyBtn = document.getElementById('historyBtn');
+
+            if (user && !user.isAnonymous) {
+                loginBtnText.innerText = "登出";
+                loginBtn.className = "bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center whitespace-nowrap border border-slate-200 font-medium";
+                loginBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket mr-2 text-slate-500"></i> <span id="loginBtnText">登出</span>';
+                historyBtn.classList.remove('hidden');
             } else {
-                statusDiv.innerHTML = '<i class="fa-solid fa-circle-xmark" title="尚未輸入完整 Key"></i>';
-                container.classList.add('border-slate-700');
-                container.classList.remove('border-green-600', 'ring-1', 'ring-green-600');
+                loginBtnText.innerText = "登入";
+                loginBtn.className = "bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2.5 rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center whitespace-nowrap border border-transparent font-medium";
+                loginBtn.innerHTML = '<i class="fa-brands fa-google mr-2"></i> <span id="loginBtnText">登入</span>';
+                historyBtn.classList.add('hidden');
+            }
+        });
+
+        window.handleAuth = async () => {
+            if (currentUser && !currentUser.isAnonymous) {
+                try {
+                    await signOut(auth);
+                    window.showToast('已安全登出', 'info');
+                    await initAuth(); 
+                } catch (e) { window.showToast('登出發生錯誤', 'error'); }
+            } else {
+                try {
+                    await signInWithPopup(auth, provider);
+                    window.showToast('Google 登入成功！', 'success');
+                } catch (e) { window.showToast('登入取消或失敗', 'error'); }
+            }
+        };
+
+        // Firebase Storage Upload Logic
+        window.uploadFileToStorage = async (file) => {
+            if (!currentUser || currentUser.isAnonymous) return null;
+            if (!file.type.startsWith('image/') && file.type !== 'application/pdf') return null; // 支援圖片與 PDF
+
+            try {
+                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+                // 改用 uploads 資料夾統一管理
+                const storageRef = ref(storage, `artifacts/${appId}/users/${currentUser.uid}/uploads/${fileName}`);
+                await uploadBytes(storageRef, file);
+                return await getDownloadURL(storageRef);
+            } catch (e) {
+                console.error("Storage Upload Error:", e);
+                return null;
+            }
+        };
+
+        // Firestore Logic
+        window.saveHistoryToCloud = async (resultData, queryAreaStr, fileUrl, fileType, originalText) => {
+            if (!currentUser || currentUser.isAnonymous) return;
+            try {
+                const historyRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'history');
+                const docData = {
+                    queryArea: queryAreaStr,
+                    result: resultData,
+                    timestamp: Date.now()
+                };
+                if(fileUrl) {
+                    docData.fileUrl = fileUrl;
+                    docData.fileType = fileType;
+                }
+                if(originalText) docData.originalText = originalText;
+                
+                await addDoc(historyRef, docData);
+            } catch (e) { console.error("Cloud Save Error:", e); }
+        };
+
+        window.loadHistoryFromCloud = async () => {
+            if (!currentUser || currentUser.isAnonymous) return [];
+            try {
+                const historyRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'history');
+                const snapshot = await getDocs(historyRef);
+                const records = [];
+                snapshot.forEach(doc => records.push({ id: doc.id, ...doc.data() }));
+                records.sort((a, b) => b.timestamp - a.timestamp);
+                return records;
+            } catch (e) {
+                console.error("Cloud Load Error:", e);
+                return [];
+            }
+        };
+
+        // 新增：徹底刪除 Firestore 紀錄與 Storage 檔案的函式
+        window.deleteRecord = async (e, docId, fileUrl) => {
+            e.stopPropagation(); // 防止點擊垃圾桶時觸發外層的「載入紀錄」動作
+            if (!confirm('確定要從雲端刪除這筆紀錄嗎？這將無法復原。')) return;
+            
+            try {
+                // 1. 刪除 Firestore 文件
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'history', docId));
+                
+                // 2. 如果有圖片/PDF，一併從 Storage 徹底刪除
+                if (fileUrl) {
+                    try {
+                        const fileRef = ref(storage, fileUrl);
+                        await deleteObject(fileRef);
+                    } catch (se) {
+                        console.warn('Storage 檔案刪除失敗或實體已不存在:', se);
+                    }
+                }
+                
+                window.showToast('紀錄已成功刪除', 'success');
+                // 重新載入列表
+                openHistory();
+            } catch (error) {
+                console.error('Delete Error:', error);
+                window.showToast('刪除失敗，請檢查網路連線', 'error');
+            }
+        };
+    </script>
+
+    <!-- Application Logic -->
+    <script>
+        let currentTab = 'text';
+        let fileData = null; // { mimeType, data } for Base64 (Gemini API)
+        let rawFileObj = null; // For Firebase Storage Upload
+        let currentResult = null; 
+        let chatHistory = []; 
+        let contextSummary = ""; 
+
+        // Toast System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let style = type === 'error' ? 'bg-red-50 text-red-700 border-red-200 shadow-red-900/5' : 
+                        (type === 'success' ? 'bg-green-50 text-green-700 border-green-200 shadow-green-900/5' : 
+                        'bg-slate-800 text-white border-slate-700 shadow-slate-900/10');
+            let icon = type === 'error' ? 'fa-circle-exclamation text-red-500' : 
+                       (type === 'success' ? 'fa-circle-check text-green-500' : 'fa-info-circle text-blue-400');
+            
+            toast.className = `${style} border px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-y-full opacity-0 flex items-center gap-3 font-medium text-sm w-max max-w-xs`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-full', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        window.showToast = showToast; 
+
+        // API Key UI
+        function checkApiKey() {
+            const val = document.getElementById('apiKeyInput').value;
+            const status = document.getElementById('apiKeyStatus');
+            const cont = document.getElementById('apiKeyContainer');
+            if(val.length > 30) {
+                status.innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i>';
+                cont.classList.replace('border-slate-700', 'border-green-500/50');
+            } else {
+                status.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+                cont.classList.replace('border-green-500/50', 'border-slate-700');
             }
         }
 
+        // Tab Switching
         function switchTab(tab) {
             currentTab = tab;
-            
-            // Update Tab UI
+            const config = {
+                'text': { icon: 'fa-font', activeClass: 'bg-white text-slate-800 shadow-sm' },
+                'image': { icon: 'fa-image', activeClass: 'bg-white text-slate-800 shadow-sm' },
+                'pdf': { icon: 'fa-file-pdf', activeClass: 'bg-white text-slate-800 shadow-sm' }
+            };
+
             ['text', 'image', 'pdf'].forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 const content = document.getElementById(`content-${t}`);
                 if (t === tab) {
-                    btn.classList.remove('text-slate-400', 'border-transparent');
-                    btn.classList.add('text-slate-700', 'border-slate-700');
+                    btn.className = `flex-1 py-2 text-sm font-bold rounded-md transition-all ${config[t].activeClass}`;
+                    btn.innerHTML = `<i class="fa-solid ${config[t].icon} mr-1.5 text-blue-500"></i>${t==='text'?'文字':t==='image'?'圖片':'PDF'}`;
                     content.classList.remove('hidden');
                 } else {
-                    btn.classList.add('text-slate-400', 'border-transparent');
-                    btn.classList.remove('text-slate-700', 'border-slate-700');
+                    btn.className = "flex-1 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-all rounded-md";
+                    btn.innerHTML = `<i class="fa-solid ${config[t].icon} mr-1.5"></i>${t==='text'?'文字':t==='image'?'圖片':'PDF'}`;
                     content.classList.add('hidden');
                 }
             });
-            
-            // Reset file data when switching tabs (optional, but cleaner)
-            fileData = null;
-            document.getElementById('imagePreview').classList.add('hidden');
-            document.getElementById('imagePreviewBox').classList.remove('hidden');
-            document.getElementById('pdfName').classList.add('hidden');
-            document.getElementById('pdfPreviewBox').classList.remove('hidden');
-            document.getElementById('lotImage').value = '';
-            document.getElementById('lotPdf').value = '';
+            // Reset Data
+            if(tab === 'text') { fileData = null; rawFileObj = null; }
         }
 
-        function previewFile(type) {
+        // Image Compression Helper
+        function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.75) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 計算縮放比例
+                        if (width > maxWidth || height > maxHeight) {
+                            const ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width *= ratio;
+                            height *= ratio;
+                        }
+                        
+                        // 繪製到 Canvas
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 導出壓縮後的 JPEG
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        canvas.toBlob(blob => {
+                            // 建立新的 File 物件供 Firebase Storage 使用
+                            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve({
+                                base64: dataUrl.split(',')[1],
+                                file: compressedFile,
+                                dataUrl: dataUrl
+                            });
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // File Preview & Compression
+        async function previewFile(type) {
             const input = document.getElementById(type === 'image' ? 'lotImage' : 'lotPdf');
             const file = input.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64String = e.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
-                
-                fileData = {
-                    mimeType: file.type,
-                    data: base64String
-                };
-
-                if (type === 'image') {
+            if (type === 'image') {
+                showToast('正在優化圖片大小...', 'info');
+                try {
+                    // 執行前端壓縮 (最大長寬 1600px, 品質 75%)
+                    const compressed = await compressImage(file);
+                    
+                    if (compressed.file.size > 5 * 1024 * 1024) {
+                        input.value = ''; 
+                        return showToast('圖片解析度過高，壓縮後仍超過 5MB', 'error');
+                    }
+                    
+                    // 儲存壓縮後的檔案 (供上傳) 與 Base64 (供 Gemini)
+                    rawFileObj = compressed.file;
+                    fileData = { mimeType: 'image/jpeg', data: compressed.base64 };
+                    
+                    // 更新 UI 預覽圖
                     const img = document.getElementById('imagePreview');
-                    img.src = e.target.result;
+                    img.src = compressed.dataUrl;
                     img.classList.remove('hidden');
                     document.getElementById('imagePreviewBox').classList.add('hidden');
-                } else {
-                    const nameBox = document.getElementById('pdfName');
-                    nameBox.textContent = file.name;
-                    nameBox.classList.remove('hidden');
-                    document.getElementById('pdfPreviewBox').classList.add('hidden');
+                } catch(e) {
+                    console.error("Compression Error:", e);
+                    showToast('圖片壓縮處理失敗', 'error');
+                    input.value = '';
                 }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function copyToClipboard(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            
-            // Fallback method for iframe environments where Clipboard API might be blocked
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-9999px";
-            textArea.style.top = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                const successful = document.execCommand('copy');
-                const msg = successful ? '已複製到剪貼簿！' : '複製失敗，請手動複製。';
-                alert(msg);
-            } catch (err) {
-                console.error('Fallback: Oops, unable to copy', err);
-                alert('複製失敗，請手動複製。');
-            }
-            document.body.removeChild(textArea);
-        }
-
-        // --- Core Logic: Call Gemini API ---
-        async function submitConsultation() {
-            // 1. Validation
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (!apiKey) {
-                alert('請先輸入 Google Gemini API Key');
-                document.getElementById('apiKeyInput').focus();
-                return;
-            }
-
-            const queryArea = document.getElementById('queryArea').value;
-            if (!queryArea) {
-                alert('請選擇您想詢問的主題領域');
-                return;
-            }
-
-            let userContentPart = [];
-            
-            if (currentTab === 'text') {
-                const text = document.getElementById('lotText').value.trim();
-                if (!text) {
-                    alert('請輸入籤詩文字');
-                    return;
-                }
-                userContentPart.push({ text: `籤詩內容: ${text}` });
             } else {
-                if (!fileData) {
-                    alert('請上傳檔案');
-                    return;
+                // PDF 邏輯保持不變，因為 PDF 無法用 Canvas 簡單壓縮
+                if (file.size > 5 * 1024 * 1024) {
+                    input.value = ''; 
+                    return showToast('PDF 檔案不能超過 5MB', 'error');
                 }
-                userContentPart.push({ text: "請分析這張圖片/文件中的籤詩內容。" });
-                userContentPart.push({
-                    inlineData: {
-                        mimeType: fileData.mimeType,
-                        data: fileData.data
-                    }
-                });
+                rawFileObj = file;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    fileData = { mimeType: file.type, data: e.target.result.split(',')[1] };
+                    const name = document.getElementById('pdfName');
+                    name.textContent = file.name;
+                    name.classList.remove('hidden');
+                    document.getElementById('pdfPreviewBox').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Clipboard
+        function copyToClipboard(id, btn) {
+            const txt = document.getElementById(id).innerText;
+            const ta = document.createElement("textarea");
+            ta.value = txt; document.body.appendChild(ta); ta.select();
+            try { 
+                document.execCommand('copy'); 
+                showToast('已複製！', 'success');
+                const icon = btn.querySelector('i');
+                icon.className = 'fa-solid fa-check text-green-500';
+                setTimeout(() => icon.className = 'fa-regular fa-copy', 2000);
+            } catch (e) { showToast('複製失敗', 'error'); }
+            ta.remove();
+        }
+
+        // History Modal
+        async function openHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyModalContent');
+            const list = document.getElementById('historyList');
+            
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.add('modal-enter');
+            content.classList.add('modal-enter-content');
+            
+            list.innerHTML = '<div class="text-center py-16 text-slate-400"><div class="loading-spinner mx-auto mb-4 w-8 h-8 border-t-blue-400"></div><p>載入雲端資料中...</p></div>';
+            
+            const records = await window.loadHistoryFromCloud();
+            if (records.length === 0) {
+                list.innerHTML = '<div class="text-center py-16 text-slate-400"><i class="fa-solid fa-inbox text-5xl mb-4 text-slate-200"></i><p>您尚未儲存任何解籤紀錄</p></div>';
+                return;
             }
 
-            // Add Context
-            userContentPart.push({ text: `求籤者詢問的主題領域是: ${queryArea}。請針對此領域進行重點解讀。` });
-
-            // 2. UI Loading State & Reset
-            document.getElementById('welcomeState').classList.add('hidden');
-            document.getElementById('resultContainer').classList.add('hidden');
-            document.getElementById('chatContainer').classList.add('hidden'); 
-            document.getElementById('ritualContainer').classList.add('hidden');
-            document.getElementById('audioContainer').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('submitBtn').disabled = true;
-
-            // 3. API Payload Construction
-            const systemPrompt = `
-                你是一位精通傳統命理、易經、現代心理學與諮商技巧的資深解籤顧問 TONY 老師。
-                你的目標是為使用者提供深度、溫暖且具備建設性的籤詩解讀。
-                
-                請嚴格遵循以下 JSON 格式回傳結果，不要包含 Markdown 標記 (如 \`\`\`json)，直接回傳純 JSON 字串：
-                {
-                    "GeneralInterpretation": "String (綜合解讀籤詩的字面意義及整體運勢，約100字)",
-                    "FocusedInterpretation": "String (針對使用者詢問的領域進行深度詳解，結合心理學建議，約150-200字)",
-                    "ActionableAdvice": "String (具體的建議行動方案，條列式或段落皆可，語氣正向積極)",
-                    "ImagePrompt_CN": "String (根據解籤意境生成的中文文生圖 Prompt，具備藝術感)",
-                    "ImagePrompt_EN": "String (根據解籤意境生成的英文文生圖 Prompt，適合 Midjourney/DALL-E)"
+            list.innerHTML = records.map(r => {
+                let mediaHtml = '';
+                if(r.fileUrl && r.fileType && r.fileType.startsWith('image/')) {
+                    mediaHtml = `<div class="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200"><img src="${r.fileUrl}" class="w-full h-full object-cover"></div>`;
+                } else if (r.fileUrl && r.fileType === 'application/pdf') {
+                    mediaHtml = `<div class="w-16 h-16 bg-red-50 text-red-500 rounded-lg flex-shrink-0 flex items-center justify-center border border-red-100"><i class="fa-solid fa-file-pdf text-2xl"></i></div>`;
+                } else if(r.imageUrl) { // 相容舊版資料
+                    mediaHtml = `<div class="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200"><img src="${r.imageUrl}" class="w-full h-full object-cover"></div>`;
+                } else if(r.originalText) {
+                    mediaHtml = `<div class="w-16 h-16 bg-blue-50 text-blue-400 rounded-lg flex-shrink-0 flex items-center justify-center border border-blue-100"><i class="fa-solid fa-font text-2xl"></i></div>`;
                 }
-                語氣要求：專業顧問感 (Professional Consultant Vibe)，使用繁體中文。
-            `;
+                
+                return `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition cursor-pointer flex gap-4 group relative" onclick='loadRecord(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
+                    ${mediaHtml}
+                    <div class="flex-grow pr-8">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded text-[11px] border border-blue-100">${r.queryArea}</span>
+                            <span class="text-[11px] text-slate-400 font-medium group-hover:text-blue-500 transition-colors"><i class="fa-regular fa-calendar mr-1"></i>${new Date(r.timestamp).toLocaleString()}</span>
+                        </div>
+                        <p class="text-sm text-slate-600 line-clamp-2 mt-1.5 leading-relaxed">${r.result.GeneralInterpretation}</p>
+                    </div>
+                    <!-- 刪除按鈕 (Hover 時顯示) -->
+                    <button onclick="window.deleteRecord(event, '${r.id}', '${r.fileUrl || r.imageUrl || ''}')" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10 shadow-sm border border-transparent hover:border-red-100" title="永久刪除此紀錄">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `}).join('');
+        }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        function closeHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyModalContent');
+            modal.classList.remove('modal-enter');
+            content.classList.remove('modal-enter-content');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function loadRecord(record) {
+            currentResult = record.result;
+            document.getElementById('queryArea').value = record.queryArea;
+            renderResults(record.queryArea);
+            closeHistory();
+            showToast('已載入雲端紀錄', 'success');
+        }
+
+        // Main Submit Logic
+        async function submitConsultation() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if(!key) {
+                document.getElementById('apiKeyInput').focus();
+                return showToast('請輸入 Google Gemini API Key', 'error');
+            }
+            const qArea = document.getElementById('queryArea').value;
+            if(!qArea) return showToast('請選擇詢問主題', 'error');
+
+            let parts = [];
+            let originalTextForHistory = null;
+
+            if(currentTab === 'text'){
+                const txt = document.getElementById('lotText').value.trim();
+                if(!txt) return showToast('請輸入籤詩內容', 'error');
+                parts.push({text: `籤詩內容: "${txt}"`});
+                originalTextForHistory = txt;
+            } else {
+                if(!fileData) return showToast('請上傳檔案', 'error');
+                parts.push({text: "請解析這份圖片/文件中的籤詩意境與文字。"});
+                parts.push({inlineData: fileData});
+            }
+            parts.push({text: `使用者詢問的主題是: 【${qArea}】`});
+
+            // UI State Change
+            ['welcomeState', 'resultContainer', 'chatContainer', 'ritualContainer', 'audioContainer'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('loadingState').classList.remove('hidden');
+            const btn = document.getElementById('submitBtn'); btn.disabled = true;
+
+            const sys = `你是精通命理、心理學的資深顧問 TONY 老師。請回傳嚴格JSON格式(\`\`\`json)，絕不包含 Markdown 標籤之外的其他文字：
+            {
+                "GeneralInterpretation": "綜合運勢解析(150字內，優美流暢)",
+                "FocusedInterpretation": "針對主題深度詳解(200字內，結合心理學建議)",
+                "ActionableAdvice": "具體行動建議(100字內，語氣溫暖正向)",
+                "ImagePrompt_CN": "適合此籤詩意境的中文文生圖Prompt",
+                "ImagePrompt_EN": "English Midjourney Prompt matching the fortune slip vibe"
+            }`;
 
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: userContentPart }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: {
-                            responseMimeType: "application/json"
-                        }
-                    })
+                // Request Gemini 3.8 Flash
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`, {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ contents:[{parts}], systemInstruction:{parts:[{text:sys}]}, generationConfig:{responseMimeType:"application/json"} })
                 });
+                
+                if(!res.ok) throw new Error("API 解析失敗");
+                const data = await res.json();
+                const raw = data.candidates[0].content.parts[0].text;
+                currentResult = JSON.parse(raw.replace(/```(?:json)?|```/g, '').trim());
 
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error?.message || 'API 呼叫失敗');
+                // Render
+                renderResults(qArea);
+                showToast('深度解籤完成！', 'success');
+
+                // Auto Upload Image/PDF & Save to Firestore
+                if (window.saveHistoryToCloud) {
+                    let uploadedUrl = null;
+                    let fileType = null;
+                    if(rawFileObj && (currentTab === 'image' || currentTab === 'pdf')) {
+                        uploadedUrl = await window.uploadFileToStorage(rawFileObj);
+                        fileType = rawFileObj.type;
+                    }
+                    await window.saveHistoryToCloud(currentResult, qArea, uploadedUrl, fileType, originalTextForHistory);
                 }
 
-                const data = await response.json();
-                const resultText = data.candidates[0].content.parts[0].text;
-                
-                // Parse JSON
-                const cleanJson = resultText.replace(/```json|```/g, '').trim();
-                currentResult = JSON.parse(cleanJson);
-
-                // 4. Render Results
-                document.getElementById('resGeneral').innerText = currentResult.GeneralInterpretation;
-                document.getElementById('resFocusTitle').innerText = `針對「${queryArea}」的詳解`;
-                document.getElementById('resFocused').innerText = currentResult.FocusedInterpretation;
-                document.getElementById('resAdvice').innerText = currentResult.ActionableAdvice;
-                document.getElementById('resPromptCN').innerText = currentResult.ImagePrompt_CN;
-                document.getElementById('resPromptEN').innerText = currentResult.ImagePrompt_EN;
-
-                // Prepare Chat Context
-                document.getElementById('chatContextTopic').innerText = queryArea;
-                contextSummary = `
-                    Current Situation Context:
-                    User asked about: ${queryArea}
-                    AI Interpretation Summary: ${currentResult.GeneralInterpretation}
-                    Focused Interpretation: ${currentResult.FocusedInterpretation}
-                    Actionable Advice given: ${currentResult.ActionableAdvice}
-                `;
-                chatHistory = []; 
-                
-                // Reset Chat UI
-                const chatMessages = document.getElementById('chatMessages');
-                while (chatMessages.children.length > 1) {
-                    chatMessages.removeChild(chatMessages.lastChild);
-                }
-
-                // Switch UI
-                document.getElementById('loadingState').classList.add('hidden');
-                document.getElementById('resultContainer').classList.remove('hidden');
-                
-                setTimeout(() => {
-                    document.getElementById('chatContainer').classList.remove('hidden');
-                }, 800);
-
-            } catch (error) {
-                alert(`發生錯誤: ${error.message}`);
-                document.getElementById('loadingState').classList.add('hidden');
+            } catch(e) {
+                console.error(e); showToast('解籤過程發生錯誤，請檢查 API Key', 'error');
                 document.getElementById('welcomeState').classList.remove('hidden');
             } finally {
-                document.getElementById('submitBtn').disabled = false;
-            }
-        }
-
-        // --- ✨ New Feature 1: Generate Ritual ---
-        async function generateRitual() {
-            if (!currentResult) return;
-            const btn = document.getElementById('ritualBtn');
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 祈求中...';
-            btn.disabled = true;
-
-            const prompt = `
-                基於以下的籤詩解讀與建議：
-                "${currentResult.GeneralInterpretation}"
-                "${currentResult.ActionableAdvice}"
-                
-                請為使用者設計一個簡單、具體且充滿儀式感的「今日開運儀式」。
-                例如：喝特定顏色的茶、面向哪個方位深呼吸、佩戴什麼樣的小飾品、或是一句短短的自我肯定語 (Affirmation)。
-                
-                要求：
-                1. 內容約 50-80 字。
-                2. 語氣神祕但溫暖，給予力量。
-                3. 使用列點方式呈現。
-            `;
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
-                });
-                
-                const data = await response.json();
-                const ritualText = data.candidates[0].content.parts[0].text;
-                
-                document.getElementById('ritualContent').innerHTML = marked.parse(ritualText);
-                document.getElementById('ritualContainer').classList.remove('hidden');
-
-            } catch (e) {
-                alert('儀式生成失敗，請稍後再試');
-                console.error(e);
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-hand-sparkles mr-1"></i> 求幸運儀式';
+                document.getElementById('loadingState').classList.add('hidden');
                 btn.disabled = false;
             }
         }
 
-        // --- ✨ New Feature 2: Generate Speech (TTS) ---
-        // Helper: Convert PCM to WAV
+        function renderResults(qArea) {
+            document.getElementById('resGeneral').innerText = currentResult.GeneralInterpretation;
+            document.getElementById('resFocusTitle').innerText = `針對「${qArea}」詳解`;
+            document.getElementById('resFocused').innerText = currentResult.FocusedInterpretation;
+            document.getElementById('resAdvice').innerText = currentResult.ActionableAdvice;
+            document.getElementById('resPromptCN').innerText = currentResult.ImagePrompt_CN;
+            document.getElementById('resPromptEN').innerText = currentResult.ImagePrompt_EN;
+
+            document.getElementById('chatContextTopic').innerText = qArea;
+            contextSummary = `Theme: ${qArea}\nGeneral: ${currentResult.GeneralInterpretation}\nFocused: ${currentResult.FocusedInterpretation}`;
+            
+            clearChat(true); // silent clear
+
+            document.getElementById('resultContainer').classList.remove('hidden');
+            document.getElementById('resultContainer').scrollIntoView({behavior: 'smooth', block: 'start'});
+            setTimeout(() => document.getElementById('chatContainer').classList.remove('hidden'), 600);
+        }
+
+        // Ritual Generation (Gemini 3.8 Flash)
+        async function generateRitual() {
+            const key = document.getElementById('apiKeyInput').value;
+            const btn = document.getElementById('ritualBtn'); 
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>祈求中...'; btn.disabled = true;
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`, {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ contents:[{parts:[{text: `根據建議"${currentResult.ActionableAdvice}"，設計一個今日開運小儀式。80字內，Markdown排版，條列式呈現，語氣溫暖神祕。`}]}] })
+                });
+                const txt = (await res.json()).candidates[0].content.parts[0].text;
+                document.getElementById('ritualContent').innerHTML = marked.parse(txt);
+                document.getElementById('ritualContainer').classList.remove('hidden');
+            } catch(e) { showToast('儀式生成失敗', 'error'); } 
+            finally { btn.innerHTML = '<i class="fa-solid fa-hand-sparkles mr-2 text-purple-500"></i>求幸運儀式'; btn.disabled = false; }
+        }
+
+        // TTS Generation (Gemini 2.5 Flash TTS)
         function pcmToWav(pcmData, sampleRate = 24000) {
-            const numChannels = 1;
-            const bitsPerSample = 16;
-            const byteRate = sampleRate * numChannels * bitsPerSample / 8;
-            const blockAlign = numChannels * bitsPerSample / 8;
-            const dataSize = pcmData.length;
-            const buffer = new ArrayBuffer(44 + dataSize);
+            const buffer = new ArrayBuffer(44 + pcmData.length);
             const view = new DataView(buffer);
-
-            // RIFF chunk descriptor
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, 36 + dataSize, true);
-            writeString(view, 8, 'WAVE');
-
-            // fmt sub-chunk
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-            view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
-            view.setUint16(22, numChannels, true); // NumChannels
-            view.setUint32(24, sampleRate, true); // SampleRate
-            view.setUint32(28, byteRate, true); // ByteRate
-            view.setUint16(32, blockAlign, true); // BlockAlign
-            view.setUint16(34, bitsPerSample, true); // BitsPerSample
-
-            // data sub-chunk
-            writeString(view, 36, 'data');
-            view.setUint32(40, dataSize, true);
-
-            // Write PCM data
-            const pcmBytes = new Uint8Array(pcmData);
-            const wavBytes = new Uint8Array(buffer, 44);
-            wavBytes.set(pcmBytes);
-
+            const write = (o, str) => { for(let i=0;i<str.length;i++) view.setUint8(o+i, str.charCodeAt(i)); };
+            write(0, 'RIFF'); view.setUint32(4, 36 + pcmData.length, true); write(8, 'WAVE');
+            write(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate*2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+            write(36, 'data'); view.setUint32(40, pcmData.length, true);
+            new Uint8Array(buffer, 44).set(new Uint8Array(pcmData));
             return buffer;
         }
 
-        function writeString(view, offset, string) {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        }
-
         async function generateSpeech() {
-            if (!currentResult) return;
-            const btn = document.getElementById('ttsBtn');
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            const textToRead = currentResult.ActionableAdvice; 
-
-            if(!textToRead) return;
-
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> 生成語音中...';
-            btn.disabled = true;
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-
+            const key = document.getElementById('apiKeyInput').value;
+            const btn = document.getElementById('ttsBtn'); 
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>生成語音中...'; btn.disabled = true;
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: textToRead }] }],
-                        generationConfig: {
-                            responseModalities: ["AUDIO"],
-                            speechConfig: {
-                                voiceConfig: {
-                                    prebuiltVoiceConfig: {
-                                        voiceName: "Aoede"
-                                    }
-                                }
-                            }
-                        }
-                    })
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`, {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ contents:[{parts:[{text: currentResult.ActionableAdvice}]}], generationConfig:{responseModalities:["AUDIO"],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Aoede"}}}}} )
                 });
-
-                if (!response.ok) throw new Error('TTS API Failed');
-
-                const data = await response.json();
-                const audioData = data.candidates[0].content.parts[0].inlineData.data;
-                
-                // Decode Base64
-                const binaryString = window.atob(audioData);
-                const pcmBytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    pcmBytes[i] = binaryString.charCodeAt(i);
-                }
-
-                // Convert PCM to WAV
-                const wavBuffer = pcmToWav(pcmBytes, 24000); // 24kHz is standard for Gemini TTS
-                const blob = new Blob([wavBuffer], { type: 'audio/wav' });
-                const audioUrl = URL.createObjectURL(blob);
-                
-                const audioPlayer = document.getElementById('audioPlayer');
-                audioPlayer.src = audioUrl;
-                document.getElementById('audioContainer').classList.remove('hidden');
-                audioPlayer.play();
-
-            } catch (e) {
-                alert('語音生成失敗: ' + e.message);
-                console.error(e);
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-2"></i> 聽老師開示';
-                btn.disabled = false;
-            }
+                const data = await res.json();
+                const b64 = data.candidates[0].content.parts[0].inlineData.data;
+                const pcm = new Uint8Array(atob(b64).split('').map(c => c.charCodeAt(0)));
+                const url = URL.createObjectURL(new Blob([pcmToWav(pcm)], {type: 'audio/wav'}));
+                const player = document.getElementById('audioPlayer'); player.src = url;
+                document.getElementById('audioContainer').classList.remove('hidden'); player.play();
+            } catch(e) { showToast('語音生成失敗','error'); } 
+            finally { btn.innerHTML = '<i class="fa-solid fa-volume-high mr-2"></i>聽老師開示'; btn.disabled = false; }
         }
 
-        // --- Chat Logic ---
+        // Chatbot (Gemini 3.8 Flash)
         async function sendChatMessage() {
-            const inputEl = document.getElementById('chatInput');
-            const userMsg = inputEl.value.trim();
-            if (!userMsg) return;
-
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (!apiKey) {
-                alert('API Key 已失效，請重新輸入');
-                return;
-            }
-
-            // 1. Add User Message
-            addChatBubble('user', userMsg);
-            inputEl.value = '';
-            document.getElementById('chatSendBtn').disabled = true;
-
-            // 2. Add Loading Bubble
-            const loadingId = addChatBubble('loading', '...');
-
-            // 3. Construct Payload
-            const systemPromptForChat = `
-                你現在是 TONY 老師，一位資深的命理與人生顧問。
-                
-                背景資訊 (Context):
-                使用者剛剛求了一支籤，並由你完成了解讀。
-                ${contextSummary}
-                
-                你的任務：
-                回答使用者的後續提問。保持專業、溫暖、正向的語氣。
-                回答需簡潔有力 (約 100-200 字內)。
-            `;
-
-            let apiContents = [];
-            chatHistory.forEach(msg => {
-                apiContents.push({ role: msg.role, parts: [{ text: msg.text }] });
-            });
-            apiContents.push({ role: "user", parts: [{ text: userMsg }] });
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const inp = document.getElementById('chatInput'); const msg = inp.value.trim();
+            const key = document.getElementById('apiKeyInput').value;
+            if(!msg || !key) return; inp.value = '';
+            
+            appendChat('user', msg);
+            const loadId = appendChat('loading');
+            
+            let contents = chatHistory.slice(-6).map(m => ({role: m.role, parts:[{text: m.text}]}));
+            contents.push({role: "user", parts:[{text: msg}]});
 
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: apiContents,
-                        systemInstruction: { parts: [{ text: systemPromptForChat }] }
-                    })
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`, {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ contents, systemInstruction:{parts:[{text:`你是溫暖的命理導師 TONY。依據解籤脈絡:${contextSummary}\n針對用戶提問給予簡潔有力(100字內)的建議。`}]} })
                 });
-
-                if (!response.ok) throw new Error('Chat API Failed');
-
-                const data = await response.json();
-                const aiResponse = data.candidates[0].content.parts[0].text;
-
-                document.getElementById(loadingId).remove();
-                addChatBubble('model', aiResponse);
-
-                chatHistory.push({ role: "user", text: userMsg });
-                chatHistory.push({ role: "model", text: aiResponse });
-
-            } catch (error) {
-                document.getElementById(loadingId).remove();
-                addChatBubble('model', '抱歉，連線似乎有點問題，請稍後再試。');
-                console.error(error);
-            } finally {
-                document.getElementById('chatSendBtn').disabled = false;
-                const chatContainer = document.getElementById('chatMessages');
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                inputEl.focus();
-            }
+                const ai = (await res.json()).candidates[0].content.parts[0].text;
+                document.getElementById(loadId).remove();
+                appendChat('model', ai);
+                chatHistory.push({role:'user',text:msg}, {role:'model',text:ai});
+            } catch(e) { document.getElementById(loadId).remove(); appendChat('model','網路連線似乎有點問題，請稍後再試。'); }
         }
 
-        function addChatBubble(role, text) {
-            const container = document.getElementById('chatMessages');
-            const id = 'msg-' + Date.now();
-            
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex items-start chat-fade-in ${role === 'user' ? 'justify-end' : ''}`;
-            wrapper.id = id;
-
-            let innerHTML = '';
-            
-            if (role === 'user') {
-                innerHTML = `
-                    <div class="bg-slate-700 text-white rounded-2xl rounded-tr-none p-3 shadow-sm max-w-[85%]">
-                        <p class="text-sm">${text}</p>
-                    </div>
-                `;
-            } else if (role === 'model') {
-                const htmlText = marked.parse(text);
-                innerHTML = `
-                    <img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" class="w-8 h-8 rounded-full mr-3 mt-1 shadow-sm">
-                    <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[85%] text-sm text-slate-700 prose prose-sm max-w-none">
-                        ${htmlText}
-                    </div>
-                `;
-            } else { // Loading
-                innerHTML = `
-                    <img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" class="w-8 h-8 rounded-full mr-3 mt-1 shadow-sm">
-                    <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 shadow-sm">
-                        <div class="flex space-x-1">
-                            <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
-                            <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                            <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            wrapper.innerHTML = innerHTML;
-            container.appendChild(wrapper);
-            container.scrollTop = container.scrollHeight;
-            return id;
+        function appendChat(role, txt='') {
+            const id = 'm'+Date.now(); const d = document.createElement('div');
+            d.id = id; d.className = `flex items-start chat-fade-in ${role==='user'?'justify-end':''}`;
+            d.innerHTML = role==='user' ? `<div class="bg-blue-600 text-white rounded-2xl rounded-tr-none py-2.5 px-4 max-w-[85%] text-sm break-words shadow-sm">${txt.replace(/</g,"&lt;")}</div>` 
+                : `<img src="https://i.postimg.cc/Gh8Zt7SX/S_56844323.jpg" class="w-9 h-9 rounded-full mr-3 shadow-sm border border-slate-200 object-cover flex-shrink-0"><div class="bg-white border border-slate-200 rounded-2xl rounded-tl-none py-2.5 px-4 text-sm text-slate-700 prose prose-sm max-w-[85%] break-words shadow-sm">${role==='loading'?'<div class="flex space-x-1.5 h-5 items-center"><div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.2s"></div><div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.4s"></div></div>':marked.parse(txt)}</div>`;
+            document.getElementById('chatMessages').appendChild(d);
+            document.getElementById('chatMessages').scrollTop = 9999; return id;
         }
 
-        function clearChat() {
-            if(confirm('確定要清除對話紀錄嗎？')) {
-                chatHistory = [];
-                const chatMessages = document.getElementById('chatMessages');
-                while (chatMessages.children.length > 1) {
-                    chatMessages.removeChild(chatMessages.lastChild);
-                }
-            }
+        function clearChat(silent=false) {
+            if(!silent && !confirm('確定要清除對話紀錄嗎？')) return;
+            chatHistory = [];
+            const c = document.getElementById('chatMessages');
+            while(c.children.length>1) c.lastChild.remove();
         }
 
         function downloadDoc() {
-            if (!currentResult) return;
-            const queryArea = document.getElementById('queryArea').value;
-            const dateStr = new Date().toISOString().split('T')[0];
-            const content = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head>
-                    <meta charset='utf-8'>
-                    <title>AI籤詩解籤報告</title>
-                    <style>
-                        body { font-family: 'Microsoft JhengHei', sans-serif; padding: 20px; }
-                        h1 { color: #1e293b; border-bottom: 2px solid #1e293b; padding-bottom: 10px; }
-                        h2 { color: #334155; margin-top: 20px; background-color: #f1f5f9; padding: 5px; }
-                        p { line-height: 1.6; color: #475569; }
-                        .advice { border: 1px solid #cbd5e1; padding: 15px; background-color: #f8fafc; color: #0f172a; font-weight: bold; }
-                        .footer { margin-top: 30px; font-size: 10pt; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-                    </style>
-                </head>
-                <body>
-                    <h1>AI 籤詩解籤報告</h1>
-                    <p><strong>諮詢日期：</strong>${dateStr}</p>
-                    <p><strong>詢問主題：</strong>${queryArea}</p>
-                    <hr>
-                    <h2>1. 綜合運勢解析</h2>
-                    <p>${currentResult.GeneralInterpretation}</p>
-                    <h2>2. ${queryArea} 深度詳解</h2>
-                    <p>${currentResult.FocusedInterpretation}</p>
-                    <h2>3. TONY 老師的行動建議</h2>
-                    <div class="advice">${currentResult.ActionableAdvice}</div>
-                    <h2>4. AI 靈感提示 (Image Prompts)</h2>
-                    <p><strong>中文：</strong> ${currentResult.ImagePrompt_CN}</p>
-                    <p><strong>English：</strong> ${currentResult.ImagePrompt_EN}</p>
-                    <div class="footer">© 2026 TONY STUDIO. 本教材由 TONY STUDIO 楊文澤顧問設計. All Rights Reserved.</div>
-                </body>
-                </html>
-            `;
-            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `AI解籤_${queryArea}_${dateStr}.doc`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            if(!currentResult) return;
+            const content = `<html xmlns:w='urn:schemas-microsoft-com:office:word'><meta charset='utf-8'><body><h2>AI 籤詩深度解析報告</h2><br/><h3>綜合解析</h3><p>${currentResult.GeneralInterpretation}</p><br/><h3>行動建議</h3><p>${currentResult.ActionableAdvice}</p></body></html>`;
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff', content], {type:'application/msword'}));
+            a.download = `TONY老師_AI解籤報告.doc`; a.click(); showToast('報告下載完成', 'success');
         }
+        marked.setOptions({breaks: true, gfm: true});
     </script>
 </body>
 </html>
